@@ -1,0 +1,25 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Training outputs and artifacts
+models/
+wandb/
+img/
+*.pth
+*.pkl
+*.log
+
+# Data directory (user confirmed)
+data/
+
+# IDE and editor settings
+.vscode/
+.idea/
+
+# OS/editor temp files
+.DS_Store
+*.swp
+*.bak
