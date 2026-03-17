@@ -1,6 +1,11 @@
 import os
 import sys
 import importlib
+import atexit
+import csv
+import json
+import signal
+from datetime import datetime
 
 from pyexpat import features
 
@@ -86,6 +91,9 @@ net_sigmoid = model.LearnSigmoid(opt.sigmoid_weight, opt.offset)
 model_path = './models/' + opt.dataset
 if not os.path.exists(model_path):
     os.makedirs(model_path)
+
+csv_result_path = os.path.join(model_path, 'run_best_metrics.csv')
+json_result_path = os.path.join(model_path, 'latest_result.json')
 
 # if len(opt.gpus.split(','))>1:
 #     netG=nn.DataParallel(netG)
@@ -193,6 +201,79 @@ best_unseen_epoch = 0
 best_H = 0
 best_seen = 0
 best_unseen = 0
+
+run_record_written = False
+run_status = 'running'
+
+
+def persist_run_result(final_status='normal_exit'):
+    global run_record_written
+    global run_status
+
+    if run_record_written:
+        return
+
+    if run_status == 'running':
+        run_status = final_status
+
+    timestamp = datetime.now().isoformat(timespec='seconds')
+    result_record = {
+        'timestamp': timestamp,
+        'dataset': opt.dataset,
+        'status': run_status,
+        'best_H': float(best_H_H),
+        'best_seen': float(best_H_seen),
+        'best_unseen': float(best_H_unseen),
+        'best_epoch': int(best_H_epoch),
+    }
+
+    # Keep one latest summary JSON for current dataset.
+    json_tmp = json_result_path + '.tmp'
+    with open(json_tmp, 'w', encoding='utf-8') as jf:
+        json.dump(result_record, jf, ensure_ascii=False, indent=2)
+    os.replace(json_tmp, json_result_path)
+
+    csv_exists = os.path.exists(csv_result_path)
+    with open(csv_result_path, 'a', newline='', encoding='utf-8') as cf:
+        writer = csv.writer(cf)
+        if not csv_exists:
+            writer.writerow([
+                'timestamp', 'dataset', 'status', 'best_H', 'best_seen', 'best_unseen', 'best_epoch'
+            ])
+        writer.writerow([
+            result_record['timestamp'],
+            result_record['dataset'],
+            result_record['status'],
+            result_record['best_H'],
+            result_record['best_seen'],
+            result_record['best_unseen'],
+            result_record['best_epoch'],
+        ])
+
+    run_record_written = True
+
+
+def _signal_exit_handler(signum, frame):
+    global run_status
+    run_status = 'interrupted'
+    persist_run_result('interrupted')
+    raise SystemExit(128 + signum)
+
+
+_orig_excepthook = sys.excepthook
+
+
+def _run_excepthook(exctype, value, traceback):
+    global run_status
+    run_status = 'error'
+    _orig_excepthook(exctype, value, traceback)
+
+
+sys.excepthook = _run_excepthook
+atexit.register(persist_run_result)
+signal.signal(signal.SIGINT, _signal_exit_handler)
+signal.signal(signal.SIGTERM, _signal_exit_handler)
+
 # train
 # energy_score_b = util.get_energy_score(data_train.test_seen_feature, data_train.map_test_seen_label, netOOD, opt)
 for epoch in range(opt.o_epoch):
