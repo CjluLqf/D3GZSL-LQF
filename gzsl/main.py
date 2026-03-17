@@ -1,4 +1,6 @@
 import os
+import sys
+import importlib
 
 from pyexpat import features
 
@@ -14,15 +16,33 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-import argsawa
-import argsawa2
 import argscub
-import argsflo
-import argssun
 import model
 import util
 import val_test
-import wandb
+
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_removed_current_dir = False
+if _current_dir in sys.path:
+    sys.path.remove(_current_dir)
+    _removed_current_dir = True
+try:
+    wandb = importlib.import_module("wandb")
+except ModuleNotFoundError:
+    class _WandbStub:
+        @staticmethod
+        def init(*args, **kwargs):
+            return None
+
+        @staticmethod
+        def log(*args, **kwargs):
+            return None
+
+    wandb = _WandbStub()
+    print("WARNING: wandb is not installed; logging is disabled.")
+finally:
+    if _removed_current_dir:
+        sys.path.insert(0, _current_dir)
 
 opt = argscub.init_args()
 wandb.init(project="addloss", entity="dearcat", name="cub_batch_embed_loss_cls", config=opt)

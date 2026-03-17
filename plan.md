@@ -1,21 +1,20 @@
 # Plan
 
 ## Task
-在项目根目录新增 init.md，整理 D3GZSL 复现 CUB 的环境初始化、数据准备与运行命令。
+将 d3gzsl 环境对齐到已验证可用的 PyTorch 2.9.1+cu130（RTX 5090），并同步更新初始化文档。
 
 ## 将要修改的文件
 - /home/st/pytorch/lqf/D3GZSL-LQF/plan.md
 - /home/st/pytorch/lqf/D3GZSL-LQF/init.md
 
 ## Steps
-1. 在仓库根目录创建 init.md。
-2. 写入 conda 环境创建（d3gzsl）、PyTorch/CUDA 安装、其余依赖安装命令。
-3. 写入 CUB 数据放置说明与文件检查命令。
-4. 写入运行脚本命令（进入 gzsl 后执行 python main.py）以及 W&B/GPU 注意事项。
+1. 检查 d3gzsl 环境当前 torch 版本与 CUDA 运行时版本。
+2. 升级 pip/setuptools/wheel，清理旧 torch 包并安装 2.9.1+cu130。
+3. 验证 torch 版本、CUDA 可用性与 GPU 识别。
+4. 更新 init.md 的 PyTorch 安装章节，明确 cu130 与版本锁定。
 
 ## 本次执行说明
-- 文档只包含可执行命令与必要说明。
-- 不修改训练代码与参数。
+- 仅升级环境与文档，不改动训练逻辑。
 
 ## 执行状态
-- 已完成：创建 /home/st/pytorch/lqf/D3GZSL-LQF/init.md。
+- 已完成：d3gzsl 已安装 PyTorch 2.9.1+cu130，并同步更新 init.md。
